@@ -1,11 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 typedef struct Program {
   int arrival;
   int burst;
   struct Program * next;
 } Program;
+
+FILE * getFile() {
+	printf("RR simulation$ ");
+	char input[20];
+	scanf("%s", input);
+	printf("Input file is %s\n", input);
+	return fopen(input, "r");
+}
+
+void validateFile(FILE * file) {
+  if (file == NULL) {
+    exit(0);
+  }
+}
 
 Program * newProgram(int arrival, int burst) {
   Program * program = (Program *) malloc(sizeof(Program));
@@ -33,22 +48,39 @@ Program * createProgramList(FILE * inputFile) {
 }
 
 int main() {
-	printf("RR simulation$ ");
-	char input[20];
-	scanf("%s", input);
-	printf("Input file is %s\n", input);
-	FILE * file = fopen(input, "r");
-
-  Program * home;
-  if (file != NULL) {
-	  home = createProgramList(file);
-  } else {
-    exit(1);
-  }
+	FILE * file = getFile();
+  validateFile(file);
+  
+  Program * initialList = createProgramList(file);
 	
-	Program * current = home;
+	Program * current = initialList;
 	while (current != 0) {
 	  printf("%d %d\n", current->arrival, current->burst);
 	  current = current->next;
+	}
+	
+	Program * runningList = 0;
+	
+	int clockTick = 0;
+	while (initialList != 0 || runningList != 0) {
+	  // First the initialList will be empty
+	  // Then the runningList
+	  // So we check initialList first and then runningList
+	  Program * current = initialList;
+	  while (current != 0) {
+	    if (current->arrival == clockTick) { // current Program is comming in
+	      // Removing current Program from initialList
+	      initialList = current->next;
+	      printf("New program comes at %d\n", clockTick);
+	    }
+	   current = current->next;
+	  }
+	  
+	  // increment clockTick
+	  clockTick++;
+	  // pausing 1sec. per clockTick
+	  // (just to make the simulation attractive)
+	  // NOTE: In Linux, sleep takes the time in seconds while in Windows, it takes in milliseconds
+	  sleep(1);
 	}
 }
