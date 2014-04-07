@@ -9,7 +9,7 @@ typedef struct Program {
 } Program;
 
 FILE * getFile() {
-	printf("SJF simulation$ ");
+	printf("RR simulation$ ");
 	char input[20];
 	scanf("%s", input);
 	printf("Input file is %s\n", input);
@@ -60,20 +60,32 @@ int main() {
 	}
 	
 	Program * runningList = 0;
+	Program * runningTail = 0; // Tail of runningList
 	
 	int clockTick = 0;
-	while (initialList != 0 || runningList != 0) {
-	  // First the initialList will be empty
-	  // Then the runningList
-	  // So we check initialList first and then runningList
-	  Program * current = initialList;
-	  while (current != 0) {
-	    if (current->arrival == clockTick) { // current Program is comming in
-	      // Removing current Program from initialList
-	      initialList = current->next;
-	      printf("New program comes at %d\n", clockTick);
-	    }
-	   current = current->next;
+	while (initialList != 0 || runningList != 0) { // If we have programs in initialList or runningList
+	
+	  // Simulating a program coming in
+	  while (initialList != 0) {
+      if (initialList->arrival == clockTick) { // Program is comming in
+        // Seperate the program from initialList
+        Program * programComingIn = initialList;
+        initialList = initialList->next;
+        programComingIn->next = 0;
+        
+        // Add the program to the runningList
+        if (runningTail != 0) { // runningList has a tail, means it is not empty
+          runningTail->next = programComingIn;
+          runningTail = runningTail->next;
+        } else { // runningList has no tail, means it is empty
+          runningList = programComingIn;
+          runningTail = runningList;
+        }
+        
+        printf("New program comes at %d\n", clockTick);
+      } else { // Program is not coming in this clockTick
+        break;
+      }
 	  }
 	  
 	  // increment clockTick
