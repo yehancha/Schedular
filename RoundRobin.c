@@ -9,9 +9,9 @@ typedef struct Program {
   struct Program * next;
 } Program;
 
+int programCount = 0; // Number of programs in the initial list
 int programsIn = 0; // number of programs came into tunning list. used when drawing the chart.
-int totalTime;
-
+int totalTime;  // Total time processor runs
 
 FILE * getFile() {
 	printf("RR simulation$ ");
@@ -38,7 +38,7 @@ Program * newProgram(int arrival, int burst) {
 Program * createProgramList(FILE * inputFile) {
   char line[20];
 	Program * home = 0, * current;
-  int programCount = 0;
+  programCount = 0;
 	while (fgets(line, sizeof(line), inputFile) != NULL) {
 	  int arrival, burst;
 	  sscanf(line, "%d\t%d", &arrival, &burst);
@@ -105,6 +105,17 @@ int main() {
     chart[i] = -1;
     i++;
   }
+  
+  int arrivalTimes[programCount];
+  int burstTimes[programCount];
+  int finishTimes[programCount];
+  int counter = 0;
+  // Initializing
+  while (counter < programCount) {
+    arrivalTimes[counter] = 0;
+    burstTimes[counter] = 0;
+    finishTimes[counter++] = 0;
+  }
 	
 	Program * runningList = 0; // Will contain running programs at that particular time
 	Program * runningTail = 0; // Tail of runningList
@@ -122,6 +133,9 @@ int main() {
 	  int programsComing = 0; // 0=program didn't come in, 1=program came in
 	  while (initialList != 0) { // If initialList is not empty
       if (initialList->arrival == clockTick) { // Program is comming in
+        // Recording these things for later calculations
+        arrivalTimes[initialList->id] = initialList->arrival;
+        burstTimes[initialList->id] = initialList->burst;
       
         printf("#%d ", initialList->id);
         programsComing = 1;
@@ -160,6 +174,8 @@ int main() {
       
 	    if (runningList->burst == 0) { // Program has finished work
 	      printf("#%d finished work\n", runningList->id);
+	      // Recording finish time
+	      finishTimes[runningList->id] = clockTick;
 	      // Removing finished program from runningList
 	      if (runningTail == runningList) { // If tail == head
 	        runningTail = runningList->next;
@@ -199,4 +215,18 @@ int main() {
 	  // NOTE: In Linux, sleep takes the time in seconds while in Windows, it takes in milliseconds
 	  sleep(1);
 	}
+	
+	// Calculate average turnaround time and average waiting time
+	int totalTAT = 0;
+	int totalWT = 0;
+	counter = 0;
+	while(counter < programCount) {
+	  int turnAroundTime = finishTimes[counter] - arrivalTimes[counter] + 1; // Arrival clock tick is also calculated. So +1.
+	  totalTAT += turnAroundTime;
+	  totalWT += turnAroundTime - burstTimes[counter++]; // waiting = turnAround - burst;
+	}
+	
+	double averageTAT = totalTAT / programCount;
+	double averageWT = totalWT / programCount;
+	printf("Average turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
 }
