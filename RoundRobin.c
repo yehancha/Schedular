@@ -168,7 +168,7 @@ int main() {
 	  
 	  if (runningList != 0) { // If the runningList is not empty
 	    runningList->burst--; // program spent 1 clockTick
-      printf("#%d is working (%d/%d, %d remains)\n", runningList->id, timeSpent + 1, timeQuantum, runningList->burst);
+      printf("#%d is working (%d/%d, %d remain)\n", runningList->id, timeSpent + 1, timeQuantum, runningList->burst);
       timeSpent++;
       chart[clockTick] = runningList->id; // This program worked in this clockTick
       
