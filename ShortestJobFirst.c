@@ -56,23 +56,34 @@ Program * createProgramList(FILE * inputFile) {
 
 int calTotalTime(Program * programList) {
   totalTime = 0;
-  
-  if (programList != 0) {
-    totalTime = programList->arrival; // Time the first program comes in
-  }
+  int lastArrival = 0;
+  int lastBurst = 0;
   
   while (programList != 0) {
     totalTime += programList->burst;
+    lastArrival = programList->arrival;
+    lastBurst = programList->burst;
     programList = programList->next;
+  }
+  
+  if (totalTime < lastArrival + lastBurst - 1) {
+    totalTime = lastArrival + lastBurst - 1;
   }
   
   return totalTime;
 }
 
-void addToRunningList(Program * runningList, Program * programCommingIn) {
+Program * addToRunningList(Program * runningList, Program * programCommingIn, int burstTimes[]) {
   do {
-    if (runningList->next == 0) {
-      runningList->next = programCommingIn;
+    if (runningList->next == 0) { // only one program is in the runningList
+      if (burstTimes[runningList->id] > programCommingIn->burst) {
+        // adding new program to top
+        programCommingIn->next = runningList;
+        runningList = programCommingIn;
+      } else {
+        // adding new program to bottom
+        runningList->next = programCommingIn;
+      }
       break;
     } else if (runningList->next->burst > programCommingIn->burst) {
       programCommingIn->next = runningList->next;
@@ -82,6 +93,8 @@ void addToRunningList(Program * runningList, Program * programCommingIn) {
       runningList = runningList->next;
     }
   } while (1);
+  
+  return runningList;
 }
 
 void printChart(int chart[]) {
@@ -89,7 +102,8 @@ void printChart(int chart[]) {
 	while (i < programsIn) {
 	  printf("#%d:\t", i);
 	  int j = 0;
-	  while (j < totalTime) {
+	  int end = totalTime + 1;
+	  while (j < end) {
 	    if (chart[j] == i) {
 	      printf("*");
 	    } else {
@@ -120,10 +134,21 @@ int main() {
     chart[i] = -1;
     i++;
   }
+  
+  int arrivalTimes[programCount];
+  int burstTimes[programCount];
+  int finishTimes[programCount];
+  int counter = 0;
+  // Initializing
+  while (counter < programCount) {
+    arrivalTimes[counter] = 0;
+    burstTimes[counter] = 0;
+    finishTimes[counter++] = 0;
+  }
 	
 	Program * runningList = 0;
 	
-	int clockTick = 0;
+	int clockTick = 1;
 	while (initialList != 0 || runningList != 0) { // If we have programs in initialList or runningList
 	  
   	printf("\033[2J\033[1;1H"); // clears terminal
@@ -133,6 +158,10 @@ int main() {
 	  int programsComing = 0; // 0=program didn't come in, 1=program came in
 	  while (initialList != 0) {
       if (initialList->arrival == clockTick) { // Program is comming in
+        // Recording these things for later calculations
+        arrivalTimes[initialList->id] = initialList->arrival;
+        burstTimes[initialList->id] = initialList->burst;
+        
         printf("#%d ", initialList->id);
         programsComing = 1;
         
@@ -143,7 +172,7 @@ int main() {
         
         // Add the program to the runningList
         if (runningList != 0) { // runningList is not empty
-          addToRunningList(runningList, programComingIn);
+          runningList = addToRunningList(runningList, programComingIn, burstTimes);
         } else { // runningList has no tail, means it is empty
           runningList = programComingIn;
         }
@@ -167,16 +196,21 @@ int main() {
       
       if (runningList->burst == 0) { // Program has finished work
 	      printf("#%d finished work\n", runningList->id);
+	      // Recording finish time
+	      finishTimes[runningList->id] = clockTick;
 	      // Removing finished program from runningList
 	      runningList = runningList->next;
 	    } else {
 	      printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
 	    }
+	  } else {
+	    printf("\n\n"); // just adding an empty line to maintain the same number of lines above the chart
 	  }
 	  
 	  // increment clockTick
 	  clockTick++;
 	  
+	  printf("\n");
 	  printChart(chart);
   	
 	  // pausing Xsec. per clockTick
@@ -184,4 +218,18 @@ int main() {
 	  // NOTE: In Linux, sleep takes the time in seconds while in Windows, it takes in milliseconds
 	  sleep(1);
 	}
+	
+	// Calculate average turnaround time and average waiting time
+	double totalTAT = 0;
+	double totalWT = 0;
+	counter = 0;
+	while(counter < programCount) {
+	  int turnAroundTime = finishTimes[counter] - arrivalTimes[counter] + 1;
+	  totalTAT += turnAroundTime;
+	  totalWT += turnAroundTime - burstTimes[counter++]; // waiting = turnAround - burst;
+	}
+	
+	double averageTAT = totalTAT / programCount;
+	double averageWT = totalWT / programCount;
+	printf("\nAverage turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
 }
