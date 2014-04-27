@@ -56,14 +56,18 @@ Program * createProgramList(FILE * inputFile) {
 
 int calTotalTime(Program * programList) {
   totalTime = 0;
-  
-  if (programList != 0) {
-    totalTime = programList->arrival; // Time the first program comes in
-  }
+  int lastArrival = 0;
+  int lastBurst = 0;
   
   while (programList != 0) {
     totalTime += programList->burst;
+    lastArrival = programList->arrival;
+    lastBurst = programList->burst;
     programList = programList->next;
+  }
+  
+  if (totalTime < lastArrival + lastBurst - 1) {
+    totalTime = lastArrival + lastBurst - 1;
   }
   
   return totalTime;
@@ -74,7 +78,8 @@ void printChart(int chart[]) {
 	while (i < programsIn) {
 	  printf("#%d:\t", i);
 	  int j = 0;
-	  while (j < totalTime) {
+	  int end = totalTime + 1;
+	  while (j < end) {
 	    if (chart[j] == i) {
 	      printf("*");
 	    } else {
@@ -203,11 +208,14 @@ int main() {
 	    } else {
 	      printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
 	    }
+	  } else {
+	    printf("\n\n"); // just adding an empty line to maintain the same number of lines above the chart
 	  }
 	  
 	  // increment clockTick
 	  clockTick++;
 	  
+	  printf("\n");
 	  printChart(chart);
   	
 	  // pausing Xsec. per clockTick
@@ -217,8 +225,8 @@ int main() {
 	}
 	
 	// Calculate average turnaround time and average waiting time
-	int totalTAT = 0;
-	int totalWT = 0;
+	double totalTAT = 0;
+	double totalWT = 0;
 	counter = 0;
 	while(counter < programCount) {
 	  int turnAroundTime = finishTimes[counter] - arrivalTimes[counter] + 1; // Arrival clock tick is also calculated. So +1.
@@ -228,5 +236,5 @@ int main() {
 	
 	double averageTAT = totalTAT / programCount;
 	double averageWT = totalWT / programCount;
-	printf("Average turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
+	printf("\nAverage turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
 }
