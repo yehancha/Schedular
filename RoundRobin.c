@@ -13,17 +13,25 @@ int programCount = 0; // Number of programs in the initial list
 int programsIn = 0; // number of programs came into tunning list. used when drawing the chart.
 int totalTime;  // Total time processor runs
 
-char[] getInput() {
+void getInput(char input[]) {
 	printf("RR simulation$ ");
-	char input[20];
 	scanf("%s", input);
-	printf("Input file is %s\n", input);
-	return input;
 }
 
-int validateInput(char[] input) {
-	// return input == "QUIT"
-	return 1;
+int validateInput(char input[]) {
+	int max = 4;
+	int count = 0;
+	char quit[] = "QUIT";
+	int proceedProgram = 1;
+	while (count < max) {
+	  if (input[count] == quit[count]) {
+	    proceedProgram = 0;
+	    break;
+	  }
+	  count++;
+	}
+	
+	return proceedProgram;
 }
 
 Program * newProgram(int arrival, int burst) {
@@ -93,14 +101,19 @@ void printChart(int chart[]) {
 
 int main() {
 	while(1) {
-  	char[] input = getInput();
+  	char input[20];
+  	getInput(input);
   	if (validateInput(input) == 0) {
+	    printf("User stopped program RoundRobin\n");
   		break;
   	}
   	FILE * file = fopen(input, "r");
     if (file == NULL) {
+	    printf("Cannot read file %s\n", input);
     	continue;
     }
+	  
+	  printf("Input file is %s\n", input);
     
     Program * initialList = createProgramList(file);
     calTotalTime(initialList);

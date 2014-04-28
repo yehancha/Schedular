@@ -13,18 +13,25 @@ int programCount = 0; // Number of programs in the initial list
 int programsIn = 0; // number of programs came into tunning list. used when drawing the chart.
 int totalTime;  // Total time processor runs
 
-FILE * getFile() {
+void getInput(char input[]) {
 	printf("RR simulation$ ");
-	char input[20];
 	scanf("%s", input);
-	printf("Input file is %s\n", input);
-	return fopen(input, "r");
 }
 
-void validateFile(FILE * file) {
-  if (file == NULL) {
-    exit(0);
-  }
+int validateInput(char input[]) {
+	int max = 4;
+	int count = 0;
+	char quit[] = "QUIT";
+	int proceedProgram = 1;
+	while (count < max) {
+	  if (input[count] == quit[count]) {
+	    proceedProgram = 0;
+	    break;
+	  }
+	  count++;
+	}
+	
+	return proceedProgram;
 }
 
 Program * newProgram(int arrival, int burst) {
@@ -117,119 +124,132 @@ void printChart(int chart[]) {
 }
 
 int main() {
-	FILE * file = getFile();
-  validateFile(file);
-  
-  Program * initialList = createProgramList(file);
-  calTotalTime(initialList);
-  
-  // Stores chart information.
-  // chart tells what program was working at each clockTick
-  // Ex: chart[13] = 4
-  // This tells that in 13th clockTick, #4 program was working. "4" is program id.
-  int chart[totalTime];
-  // Assign all clockTicks to -1, so they will not represent any program id when starts.
-  int i = 0;
-  while (i < totalTime) {
-    chart[i] = -1;
-    i++;
-  }
-  
-  int arrivalTimes[programCount];
-  int burstTimes[programCount];
-  int finishTimes[programCount];
-  int counter = 0;
-  // Initializing
-  while (counter < programCount) {
-    arrivalTimes[counter] = 0;
-    burstTimes[counter] = 0;
-    finishTimes[counter++] = 0;
-  }
-	
-	Program * runningList = 0;
-	
-	int clockTick = 1;
-	while (initialList != 0 || runningList != 0) { // If we have programs in initialList or runningList
+	while(1) {
+  	char input[20];
+  	getInput(input);
+  	if (validateInput(input) == 0) {
+	    printf("User stopped program ShortestJobFirst\n");
+  		break;
+  	}
+  	FILE * file = fopen(input, "r");
+    if (file == NULL) {
+	    printf("Cannot read file %s\n", input);
+    	continue;
+    }
 	  
-  	printf("\033[2J\033[1;1H"); // clears terminal
-  	printf("ClockTick: %d\n", clockTick);
-	
-	  // Simulating a program coming in
-	  int programsComing = 0; // 0=program didn't come in, 1=program came in
-	  while (initialList != 0) {
-      if (initialList->arrival == clockTick) { // Program is comming in
-        // Recording these things for later calculations
-        arrivalTimes[initialList->id] = initialList->arrival;
-        burstTimes[initialList->id] = initialList->burst;
-        
-        printf("#%d ", initialList->id);
-        programsComing = 1;
-        
-        // Seperate the program from initialList
-        Program * programComingIn = initialList;
-        initialList = initialList->next;
-        programComingIn->next = 0;
-        
-        // Add the program to the runningList
-        if (runningList != 0) { // runningList is not empty
-          runningList = addToRunningList(runningList, programComingIn, burstTimes);
-        } else { // runningList has no tail, means it is empty
-          runningList = programComingIn;
-        }
-        
-        programsIn++;
-      } else { // Program is not coming in this clockTick
-        break;
-      }
-	  }
-	  
-	  if (programsComing == 1) {
-	    printf("coming in.\n");
-	  } else {
-	    printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
-	  }
-	  
-	  if (runningList != 0) { // If the runningList is not empty
-	    runningList->burst--; // program spent 1 clockTick
-      printf("#%d is working (%d remain)\n", runningList->id, runningList->burst);
-      chart[clockTick] = runningList->id; // This program worked in this clockTick
-      
-      if (runningList->burst == 0) { // Program has finished work
-	      printf("#%d finished work\n", runningList->id);
-	      // Recording finish time
-	      finishTimes[runningList->id] = clockTick;
-	      // Removing finished program from runningList
-	      runningList = runningList->next;
-	    } else {
-	      printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
-	    }
-	  } else {
-	    printf("\n\n"); // just adding an empty line to maintain the same number of lines above the chart
-	  }
-	  
-	  // increment clockTick
-	  clockTick++;
-	  
-	  printf("\n");
-	  printChart(chart);
+	  printf("Input file is %s\n", input);
+    
+    Program * initialList = createProgramList(file);
+    calTotalTime(initialList);
+    
+    // Stores chart information.
+    // chart tells what program was working at each clockTick
+    // Ex: chart[13] = 4
+    // This tells that in 13th clockTick, #4 program was working. "4" is program id.
+    int chart[totalTime];
+    // Assign all clockTicks to -1, so they will not represent any program id when starts.
+    int i = 0;
+    while (i < totalTime) {
+      chart[i] = -1;
+      i++;
+    }
+    
+    int arrivalTimes[programCount];
+    int burstTimes[programCount];
+    int finishTimes[programCount];
+    int counter = 0;
+    // Initializing
+    while (counter < programCount) {
+      arrivalTimes[counter] = 0;
+      burstTimes[counter] = 0;
+      finishTimes[counter++] = 0;
+    }
   	
-	  // pausing Xsec. per clockTick
-	  // (just to make the simulation attractive)
-	  // NOTE: In Linux, sleep takes the time in seconds while in Windows, it takes in milliseconds
-	  sleep(1);
+  	Program * runningList = 0;
+  	
+  	int clockTick = 1;
+  	while (initialList != 0 || runningList != 0) { // If we have programs in initialList or runningList
+  	  
+    	printf("\033[2J\033[1;1H"); // clears terminal
+    	printf("ClockTick: %d\n", clockTick);
+  	
+  	  // Simulating a program coming in
+  	  int programsComing = 0; // 0=program didn't come in, 1=program came in
+  	  while (initialList != 0) {
+        if (initialList->arrival == clockTick) { // Program is comming in
+          // Recording these things for later calculations
+          arrivalTimes[initialList->id] = initialList->arrival;
+          burstTimes[initialList->id] = initialList->burst;
+          
+          printf("#%d ", initialList->id);
+          programsComing = 1;
+          
+          // Seperate the program from initialList
+          Program * programComingIn = initialList;
+          initialList = initialList->next;
+          programComingIn->next = 0;
+          
+          // Add the program to the runningList
+          if (runningList != 0) { // runningList is not empty
+            runningList = addToRunningList(runningList, programComingIn, burstTimes);
+          } else { // runningList has no tail, means it is empty
+            runningList = programComingIn;
+          }
+          
+          programsIn++;
+        } else { // Program is not coming in this clockTick
+          break;
+        }
+  	  }
+  	  
+  	  if (programsComing == 1) {
+  	    printf("coming in.\n");
+  	  } else {
+  	    printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
+  	  }
+  	  
+  	  if (runningList != 0) { // If the runningList is not empty
+  	    runningList->burst--; // program spent 1 clockTick
+        printf("#%d is working (%d remain)\n", runningList->id, runningList->burst);
+        chart[clockTick] = runningList->id; // This program worked in this clockTick
+        
+        if (runningList->burst == 0) { // Program has finished work
+  	      printf("#%d finished work\n", runningList->id);
+  	      // Recording finish time
+  	      finishTimes[runningList->id] = clockTick;
+  	      // Removing finished program from runningList
+  	      runningList = runningList->next;
+  	    } else {
+  	      printf("\n"); // just adding an empty line to maintain the same number of lines above the chart
+  	    }
+  	  } else {
+  	    printf("\n\n"); // just adding an empty line to maintain the same number of lines above the chart
+  	  }
+  	  
+  	  // increment clockTick
+  	  clockTick++;
+  	  
+  	  printf("\n");
+  	  printChart(chart);
+    	
+  	  // pausing Xsec. per clockTick
+  	  // (just to make the simulation attractive)
+  	  // NOTE: In Linux, sleep takes the time in seconds while in Windows, it takes in milliseconds
+  	  sleep(1);
+  	}
+  	
+  	// Calculate average turnaround time and average waiting time
+  	double totalTAT = 0;
+  	double totalWT = 0;
+  	counter = 0;
+  	while(counter < programCount) {
+  	  int turnAroundTime = finishTimes[counter] - arrivalTimes[counter] + 1;
+  	  totalTAT += turnAroundTime;
+  	  totalWT += turnAroundTime - burstTimes[counter++]; // waiting = turnAround - burst;
+  	}
+  	
+  	double averageTAT = totalTAT / programCount;
+  	double averageWT = totalWT / programCount;
+  	printf("\nAverage turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
 	}
-	
-	// Calculate average turnaround time and average waiting time
-	double totalTAT = 0;
-	double totalWT = 0;
-	counter = 0;
-	while(counter < programCount) {
-	  int turnAroundTime = finishTimes[counter] - arrivalTimes[counter] + 1;
-	  totalTAT += turnAroundTime;
-	  totalWT += turnAroundTime - burstTimes[counter++]; // waiting = turnAround - burst;
-	}
-	
-	double averageTAT = totalTAT / programCount;
-	double averageWT = totalWT / programCount;
-	printf("\nAverage turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
 }
