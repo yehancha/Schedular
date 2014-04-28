@@ -99,7 +99,7 @@ void printChart(int chart[]) {
 	}
 }
 
-int main() {
+int main(int argc, char * argv[]) {
 	while(1) {
   	char input[20];
   	getInput(input);
@@ -144,7 +144,10 @@ int main() {
   	Program * runningList = 0; // Will contain running programs at that particular time
   	Program * runningTail = 0; // Tail of runningList
   	
-  	int timeQuantum = 3;
+  	int timeQuantum = 3; // default value = 3
+  	if (argc > 1) {
+  	  sscanf(argv[1], "%d", &timeQuantum);
+  	}
   	int timeSpent = 0; // time spent by the current program
   	
   	int clockTick = 0;
