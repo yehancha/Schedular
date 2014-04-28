@@ -13,18 +13,17 @@ int programCount = 0; // Number of programs in the initial list
 int programsIn = 0; // number of programs came into tunning list. used when drawing the chart.
 int totalTime;  // Total time processor runs
 
-FILE * getFile() {
+char[] getInput() {
 	printf("RR simulation$ ");
 	char input[20];
 	scanf("%s", input);
 	printf("Input file is %s\n", input);
-	return fopen(input, "r");
+	return input;
 }
 
-void validateFile(FILE * file) {
-  if (file == NULL) {
-    exit(0);
-  }
+int validateInput(char[] input) {
+	// return input == "QUIT"
+	return 1;
 }
 
 Program * newProgram(int arrival, int burst) {
@@ -93,8 +92,15 @@ void printChart(int chart[]) {
 }
 
 int main() {
-	FILE * file = getFile();
-  validateFile(file);
+	while(1) {
+	char[] input = getInput();
+	if (validateInput(input) == 0) {
+		break;
+	}
+	FILE * file = fopen(input, "r");
+  if (file == NULL) {
+  	continue;
+  }
   
   Program * initialList = createProgramList(file);
   calTotalTime(initialList);
@@ -237,4 +243,5 @@ int main() {
 	double averageTAT = totalTAT / programCount;
 	double averageWT = totalWT / programCount;
 	printf("\nAverage turnaround time=%f\nAverage waiting time=%f\n", averageTAT, averageWT);
+	}
 }
